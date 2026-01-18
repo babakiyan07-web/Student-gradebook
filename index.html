@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Student Gradebook — MVP</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg: #0b0e14;
+      --panel: #11151d;
+      --panel-2: #141a24;
+      --text: #e6edf3;
+      --muted: #9fb0c0;
+      --primary: #4ea1ff;
+      --primary-600:#2c86ee;
+      --danger:#ff5d5d;
+      --success:#38d39f;
+      --warning:#ffb86c;
+      --border:#1f2633;
+      --green-weak: rgba(56,211,159,.15);
+      --red-weak: rgba(255,93,93,.15);
+      --yellow-weak: rgba(255,184,108,.15);
+      --radius: 12px;
+      --space: 14px;
+      --shadow: 0 8px 24px rgba(0,0,0,.35);
+    }
+    *{box-sizing: border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      background: linear-gradient(180deg, #0b0e14, #0a0d13 50%, #0b0e14);
+      color:var(--text);
+    }
+    header{
+      position:sticky; top:0; z-index:5; backdrop-filter: blur(8px);
+      background: rgba(11,14,20,.75); border-bottom:1px solid var(--border);
+    }
+    .wrap{max-width:1200px; margin:0 auto; padding: 10px var(--space);}
+    .brand{display:flex; align-items:center; gap:10px; font-weight:700}
+    .brand .dot{width:12px; height:12px; border-radius:50%; background:var(--primary); box-shadow:0 0 0 4px rgba(78,161,255,.2)}
+    .tabs{display:flex; flex-wrap:wrap; gap:8px; margin-top:10px}
+    .tab{
+      padding:8px 12px; border:1px solid var(--border); border-radius:999px;
+      color:var(--muted); background:var(--panel-2); cursor:pointer; user-select:none;
+    }
+    .tab.active{color:white; background:var(--primary-600); border-color:transparent}
+    main{padding: 24px var(--space)}
+    .grid{display:grid; grid-template-columns: 1fr; gap:16px}
+    @media (min-width: 900px){ .grid{grid-template-columns:1.2fr 2fr} }
+    .card{
+      background:var(--panel); border:1px solid var(--border); border-radius:var(--radius);
+      padding:16px; box-shadow: var(--shadow);
+    }
+    .row{display:flex; gap:10px; flex-wrap:wrap}
+    .row > * {flex:1}
+    label{font-size:12px; color:var(--muted); display:block; margin-bottom:6px}
+    input,select{
+      width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--border);
+      background:var(--panel-2); color:var(--text); outline:none;
+    }
+    input:focus,select:focus{border-color:var(--primary)}
+    table{width:100%; border-collapse: collapse; border-spacing:0; font-size:14px}
+    th,td{padding:10px; border-bottom:1px solid var(--border)}
+    th{color:var(--muted); text-align:left}
+    tr:hover td{background: rgba(255,255,255,.02)}
+    .actions{display:flex; gap:8px; justify-content:flex-end}
+    .btn{
+      padding:8px 12px; border-radius:10px; border:1px solid var(--border); background:var(--panel-2); color:var(--text);
+      cursor:pointer; white-space:nowrap;
+    }
+    .btn.primary{background:var(--primary); border-color:transparent; color:#07121f; font-weight:600}
+    .btn.danger{background:var(--red-weak); border-color:#402; color:#ff8a8a}
+    .btn.warn{background:var(--yellow-weak); border-color:#420; color:#ffc57f}
+    .pill{padding:6px 10px; border-radius:999px; border:1px solid var(--border); color:var(--muted); display:inline-flex; gap:6px; align-items:center}
+    .stat{display:flex; flex-direction:column; gap:6px; padding:12px; border-radius:12px; background:#0e141e; border:1px solid var(--border)}
+    .stat .big{font-size:28px; font-weight:700}
+    .muted{color:var(--muted)}
+    .ok{color:var(--success)}
+    .bad{color:var(--danger)}
+    .table-scroll{max-height:420px; overflow:auto; border:1px solid var(--border); border-radius:12px}
+    .toolbar{display:flex; gap:8px; flex-wrap:wrap; justify-content:space-between; align-items:center; margin-bottom:10px}
+    .spacer{flex:1}
+    .tag{display:inline-block; font-size:12px; padding:3px 8px; border-radius:999px; background:#0b1522; border:1px solid var(--border); color:var(--muted)}
+    .kbd{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; background:#0a1220; border:1px solid var(--border); padding:2px 6px; border-radius:6px; color:#cfe3ff}
+    footer{color:var(--muted); padding:24px var(--space); border-top:1px solid var(--border)}
+    dialog{border:none; border-radius:16px; background:var(--panel); color:var(--text); width:min(680px, 92vw); padding:0; box-shadow:var(--shadow)}
+    dialog::backdrop{background:rgba(0,0,0,.55)}
+    .dlg-head{padding:14px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between}
+    .dlg-body{padding:16px}
+    .dlg-foot{padding:12px 16px; border-top:1px solid var(--border); display:flex; gap:8px; justify-content:flex-end}
+    .err{color:#ff8a8a; font-size:13px}
+    .empty{padding:20px; color:var(--muted); text-align:center; border:1px dashed var(--border); border-radius:12px; background:#0c1320}
+    .linklike{color:var(--primary); cursor:pointer; text-decoration:underline}
+  </style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="brand"><span class="dot"></span> Student Gradebook <span class="tag">MVP</span></div>
+    <div id="tabs" class="tabs" role="tablist" aria-label="Main Navigation"></div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div id="root"></div>
+</main>
+
+<footer class="wrap">
+  <div>Data stored locally (<code>localStorage</code>). Use <span class="kbd">Export</span>/<span class="kbd">Import</span> for backups.</div>
+</footer>
+
+<!-- React via CDN -->
+<script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+
+<!-- ✅ Add Babel so JSX works in the browser -->
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<!-- Your app script now uses JSX, so mark it as type="text/babel" -->
+<script type="text/babel">
+(() => {
+  const {useState,useMemo,useEffect,useRef} = React;
+
+  const uid = () => Math.random().toString(36).slice(2, 9);
+  const fmtDate = s => s ? new Date(s).toISOString().slice(0,10) : '';
+  const clamp = (n, a, b) => Math.min(Math.max(n, a), b);
+
+  const STORAGE_KEY = 'gradebook:v1';
+  const defaultState = () => ({
+    students: [
+      {id: uid(), name: "Alex Kim", email:"alex.kim@example.edu"},
+      {id: uid(), name: "Sam Lee", email:"sam.lee@example.edu"}
+    ],
+    courses: [
+      {id: uid(), name: "Mathematics"},
+      {id: uid(), name: "Biology"}
+    ],
+    assignments: [],
+    grades: []
+  });
+
+  function loadState(){
+    try{
+      const s = localStorage.getItem(STORAGE_KEY);
+      return s ? JSON.parse(s) : defaultState();
+    }catch(e){
+      console.warn("Bad storage, resetting.", e);
+      return defaultState();
+    }
+  }
+  function saveState(state){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+
+  function assignmentById(state, id){ return state.assignments.find(a=>a.id===id); }
+  function courseById(state, id){ return state.courses.find(c=>c.id===id); }
+
+  function calcAverages(state){
+    const asgnByCourse = new Map();
+    state.assignments.forEach(a => {
+      if(!asgnByCourse.has(a.courseId)) asgnByCourse.set(a.courseId, []);
+      asgnByCourse.get(a.courseId).push(a);
+    });
+    const assignmentAvgs = Object.fromEntries(state.assignments.map(a=>{
+      const gs = state.grades.filter(g=>g.assignmentId===a.id);
+      const avg = gs.length ? (gs.reduce((s,g)=>s+Number(g.score||0),0)/gs.length) : 0;
+      return [a.id, avg];
+    }));
+    const courseAvgs = Object.fromEntries(state.courses.map(c=>{
+      const as = asgnByCourse.get(c.id)||[];
+      let tot=0, denom=0;
+      as.forEach(a=>{
+        const gs = state.grades.filter(g=>g.assignmentId===a.id);
+        gs.forEach(g=>{ tot += Number(g.score||0); denom += Number(a.maxPoints||0); });
+      });
+      const pct = denom ? (tot/denom)*100 : 0;
+      return [c.id, pct];
+    }));
+    const byStudent = new Map();
+    state.students.forEach(s=>byStudent.set(s.id, {overall:0, perCourse:{}}));
+    state.grades.forEach(g=>{
+      const a = assignmentById(state, g.assignmentId);
+      if(!a) return;
+      const entry = byStudent.get(g.studentId);
+      if(!entry.perCourse[a.courseId]) entry.perCourse[a.courseId] = {got:0, max:0};
+      entry.perCourse[a.courseId].got += Number(g.score||0);
+      entry.perCourse[a.courseId].max += Number(a.maxPoints||0);
+    });
+    byStudent.forEach(v=>{
+      let got=0, max=0;
+      Object.values(v.perCourse).forEach(x=>{got+=x.got; max+=x.max;});
+      v.overall = max ? (got/max)*100 : 0;
+      Object.keys(v.perCourse).forEach(k=>{
+        const pc = v.perCourse[k];
+        pc.pct = pc.max ? (pc.got/pc.max)*100 : 0;
+      });
+    });
+    return {assignmentAvgs, courseAvgs, byStudent};
+  }
+
+  function Toolbar({title, children, right}){
+    return (
+      <div className="toolbar">
+        <div className="row" style={{alignItems:'center'}}>
+          <h2 style={{margin:'0 12px 0 0'}}>{title}</h2>
+          {children}
+        </div>
+        <div className="actions">{right}</div>
+      </div>
+    );
+  }
+
+  function Confirm({open, onClose, onConfirm, text}){
+    const ref = useRef();
+    useEffect(()=>{ if(open) ref.current.showModal(); else ref.current.close(); }, [open]);
+    return (
+      <dialog ref={ref} onCancel={e=>{e.preventDefault(); onClose();}}>
+        <div className="dlg-head"><strong>Confirm</strong><span className="muted">Action</span></div>
+        <div className="dlg-body">{text}</div>
+        <div className="dlg-foot">
+          <button className="btn" onClick={onClose}>Cancel</button>
+          <button className="btn danger" onClick={()=>{onConfirm(); onClose();}}>Delete</button>
+        </div>
+      </dialog>
+    );
+  }
+
+  function Modal({open, title, onClose, onSave, children, primaryLabel="Save"}){
+    const ref = useRef();
+    useEffect(()=>{ if(open) ref.current.showModal(); else ref.current.close(); }, [open]);
+    return (
+      <dialog ref={ref} onCancel={e=>{e.preventDefault(); onClose();}}>
+        <div className="dlg-head"><strong>{title}</strong></div>
+        <div className="dlg-body">{children}</div>
+        <div className="dlg-foot">
+          <button className="btn" onClick={onClose}>Cancel</button>
+          <button className="btn primary" onClick={onSave}>{primaryLabel}</button>
+        </div>
+      </dialog>
+    );
+  }
+
+  const TABS = ["Dashboard","Students","Courses","Assignments","Grades","Data"];
+  function Tabs({value,onChange}){
+    return TABS.map(t =>
+      React.createElement('button',
+        {role:'tab', 'aria-selected': value===t, className: 'tab '+(value===t?'active':''), key:t, onClick:()=>onChange(t)}, t)
+    );
+  }
+
+  function Students({state,setState}){
+    const [q,setQ] = useState("");
+    const [editing,setEditing] = useState(null);
+    const [err,setErr]=useState('');
+
+    const list = useMemo(()=>{
+      const ql = q.trim().toLowerCase();
+      return state.students.filter(s => !ql || s.name.toLowerCase().includes(ql) || s.email.toLowerCase().includes(ql));
+    }, [state.students, q]);
+
+    function save(student){
+      const name = student.name.trim();
+      const email = student.email.trim();
+      if(!name) return setErr("Name is required.");
+      if(!/^\S+@\S+\.\S+$/.test(email)) return setErr("Valid email is required.");
+      const dup = state.students.find(s=>s.email.toLowerCase()===email.toLowerCase() && s.id!==student.id);
+      if(dup) return setErr("Email already exists.");
+      setErr('');
+      setState(prev=>{
+        const students = prev.students.some(s=>s.id===student.id)
+          ? prev.students.map(s=>s.id===student.id? student : s)
+          : [...prev.students, {...student, id: uid()}];
+        return {...prev, students};
+      });
+      setEditing(null);
+    }
+    function remove(id){
+      const hasGrades = state.grades.some(g=>g.studentId===id);
+      if(hasGrades){ alert("Cannot delete: student has grades. Remove grades first."); return; }
+      setState(prev=>({...prev, students: prev.students.filter(s=>s.id!==id)}));
+    }
+
+    return (
+      <div className="card">
+        <Toolbar title="Students" right={
+          <>
+            <input placeholder="Search name or email…" value={q} onChange={e=>setQ(e.target.value)} aria-label="Search students"/>
+            <button className="btn primary" onClick={()=>setEditing({id:null, name:'', email:''})}>Add Student</button>
+          </>
+        }/>
+        {list.length===0 ? <div className="empty">No students found.</div> :
+        <div className="table-scroll">
+          <table>
+            <thead><tr><th>Name</th><th>Email</th><th className="muted">ID</th><th></th></tr></thead>
+            <tbody>
+              {list.map(s=>
+                <tr key={s.id}>
+                  <td>{s.name}</td>
+                  <td className="muted">{s.email}</td>
+                  <td className="muted">{s.id}</td>
+                  <td className="actions">
+                    <button className="btn" onClick={()=>setEditing(s)}>Edit</button>
+                    <button className="btn danger" onClick={()=>remove(s.id)}>Delete</button>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>}
+        <Modal open={!!editing} title={editing?.id ? "Edit Student" : "Add Student"}
+               onClose={()=>{setEditing(null); setErr('');}}
+               onSave={()=>save(editing)}>
+          <div className="row">
+            <div><label>Name</label><input value={editing?.name||''} onChange={e=>setEditing({...editing, name:e.target.value})}/></div>
+            <div><label>Email</label><input value={editing?.email||''} onChange={e=>setEditing({...editing, email:e.target.value})}/></div>
+          </div>
+          {err && <div className="err" role="alert">{err}</div>}
+        </Modal>
+      </div>
+    );
+  }
+
+  function Courses({state,setState}){
+    const [name,setName]=useState('');
+    const [err,setErr]=useState('');
+    const [rename,setRename]=useState(null);
+
+    function add(){
+      const n = name.trim();
+      if(!n) return setErr("Course name required.");
+      if(state.courses.some(c=>c.name.toLowerCase()===n.toLowerCase())) return setErr("Course already exists.");
+      setState(prev=>({...prev, courses:[...prev.courses,{id:uid(), name:n}]}));
+      setName(''); setErr('');
+    }
+    function del(id){
+      if(state.assignments.some(a=>a.courseId===id)){ alert("Cannot delete: course has assignments."); return; }
+      setState(prev=>({...prev, courses: prev.courses.filter(c=>c.id!==id)}));
+    }
+    function commitRename(){
+      const n = rename.name.trim();
+      if(!n) return setErr("Course name required.");
+      if(state.courses.some(c=>c.name.toLowerCase()===n.toLowerCase() && c.id!==rename.id))
+        return setErr("Course name already exists.");
+      setState(prev=>({...prev, courses: prev.courses.map(c=>c.id===rename.id? {...c, name:n}:c)}));
+      setRename(null); setErr('');
+    }
+
+    return (
+      <div className="card">
+        <Toolbar title="Courses" right={<span className="muted">Tip: You can't delete a course with assignments.</span>}/>
+        <div className="row">
+          <div>
+            <label>New course name</label>
+            <input value={name} onChange={e=>setName(e.target.value)} placeholder="e.g., Physics"/>
+          </div>
+          <div style={{alignSelf:'end'}}><button className="btn primary" onClick={add}>Add</button></div>
+        </div>
+        {err && <div className="err" role="alert" style={{marginTop:8}}>{err}</div>}
+        <div className="table-scroll" style={{marginTop:12}}>
+          <table>
+            <thead><tr><th>Name</th><th>ID</th><th></th></tr></thead>
+            <tbody>
+              {state.courses.map(c=>
+                <tr key={c.id}>
+                  <td>{c.name}</td>
+                  <td className="muted">{c.id}</td>
+                  <td className="actions">
+                    <button className="btn" onClick={()=>setRename(c)}>Rename</button>
+                    <button className="btn danger" onClick={()=>del(c.id)}>Delete</button>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <Modal open={!!rename} title="Rename Course" onClose={()=>{setRename(null); setErr('');}} onSave={commitRename}>
+          <div><label>Course name</label><input value={rename?.name||''} onChange={e=>setRename({...rename, name:e.target.value})}/></div>
+          {err && <div className="err" role="alert">{err}</div>}
+        </Modal>
+      </div>
+    );
+  }
+
+  function Assignments({state,setState}){
+    const [editing,setEditing]=useState(null);
+    const [filterCourse,setFilterCourse]=useState('all');
+    const filtered = useMemo(()=>{
+      return state.assignments.filter(a=> filterCourse==='all' || a.courseId===filterCourse);
+    }, [state.assignments, filterCourse]);
+
+    function save(a){
+      const title = (a.title||'').trim();
+      const max = Number(a.maxPoints);
+      if(!a.courseId) return alert("Course is required.");
+      if(!title) return alert("Title is required.");
+      if(!Number.isFinite(max) || max<=0) return alert("Max points must be > 0.");
+      setState(prev=>{
+        const exists = prev.assignments.some(x=>x.id===a.id);
+        const assignments = exists ? prev.assignments.map(x=>x.id===a.id?a:x) : [...prev.assignments, {...a, id: uid()}];
+        return {...prev, assignments};
+      });
+      setEditing(null);
+    }
+
+    function del(id){
+      setState(prev=>{
+        const assignments = prev.assignments.filter(a=>a.id!==id);
+        const grades = prev.grades.filter(g=>g.assignmentId!==id);
+        return {...prev, assignments, grades};
+      });
+    }
+
+    return (
+      <div className="card">
+        <Toolbar title="Assignments" right={
+          <>
+            <select value={filterCourse} onChange={e=>setFilterCourse(e.target.value)} aria-label="Filter by course">
+              <option value="all">All courses</option>
+              {state.courses.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+            <button className="btn primary" onClick={()=>setEditing({id:null, courseId:'', title:'', maxPoints:100, dueDate:fmtDate(new Date())})}>Add Assignment</button>
+          </>
+        }/>
+        {filtered.length===0 ? <div className="empty">No assignments.</div> :
+        <div className="table-scroll">
+          <table>
+            <thead><tr><th>Title</th><th>Course</th><th>Max</th><th>Due</th><th></th></tr></thead>
+            <tbody>
+              {filtered.map(a=>
+                <tr key={a.id}>
+                  <td>{a.title}</td>
+                  <td className="muted">{courseById(state, a.courseId)?.name||'—'}</td>
+                  <td>{a.maxPoints}</td>
+                  <td className="muted">{fmtDate(a.dueDate)}</td>
+                  <td className="actions">
+                    <button className="btn" onClick={()=>setEditing(a)}>Edit</button>
+                    <button className="btn danger" onClick={()=>del(a.id)}>Delete</button>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>}
+        <Modal open={!!editing} title={editing?.id? "Edit Assignment":"Add Assignment"}
+               onClose={()=>setEditing(null)} onSave={()=>save(editing)}>
+          <div className="row">
+            <div><label>Course</label>
+              <select value={editing?.courseId||''} onChange={e=>setEditing({...editing, courseId:e.target.value})}>
+                <option value="">Select…</option>
+                {state.courses.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </div>
+            <div><label>Title</label>
+              <input value={editing?.title||''} onChange={e=>setEditing({...editing, title:e.target.value})}/>
+            </div>
+          </div>
+          <div className="row">
+            <div><label>Max Points</label>
+              <input type="number" min="1" value={editing?.maxPoints||''} onChange={e=>setEditing({...editing, maxPoints:Number(e.target.value)})}/>
+            </div>
+            <div><label>Due Date</label>
+              <input type="date" value={fmtDate(editing?.dueDate)} onChange={e=>setEditing({...editing, dueDate:e.target.value})}/>
+            </div>
+          </div>
+        </Modal>
+      </div>
+    );
+  }
+
+  function Grades({state,setState}){
+    const [courseFilter,setCourseFilter]=useState('all');
+    const [studentFilter,setStudentFilter]=useState('all');
+
+    const visibleAssignments = useMemo(()=>{
+      return state.assignments.filter(a=>courseFilter==='all' || a.courseId===courseFilter);
+    }, [state.assignments, courseFilter]);
+
+    function setScore(studentId, assignmentId, val){
+      const a = assignmentById(state, assignmentId);
+      let n = Number(val);
+      if(!Number.isFinite(n)) n=0;
+      n = clamp(n, 0, Number(a?.maxPoints||0));
+      setState(prev=>{
+        const idx = prev.grades.findIndex(g=>g.studentId===studentId && g.assignmentId===assignmentId);
+        let grades = prev.grades.slice();
+        if(idx>=0) grades[idx] = {...grades[idx], score: n};
+        else grades.push({id: uid(), studentId, assignmentId, score: n});
+        return {...prev, grades};
+      });
+    }
+
+    const students = useMemo(()=>{
+      let arr = state.students;
+      if(studentFilter!=='all') arr = arr.filter(s=>s.id===studentFilter);
+      return arr;
+    }, [state.students, studentFilter]);
+
+    return (
+      <div className="card">
+        <Toolbar title="Grades" right={
+          <>
+            <select value={courseFilter} onChange={e=>setCourseFilter(e.target.value)} aria-label="Course">
+              <option value="all">All courses</option>
+              {state.courses.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+            <select value={studentFilter} onChange={e=>setStudentFilter(e.target.value)} aria-label="Student">
+              <option value="all">All students</option>
+              {state.students.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+          </>
+        }/>
+        {visibleAssignments.length===0 || students.length===0 ? <div className="empty">Add students and assignments to enter grades.</div> :
+        <div className="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Student</th>
+                {visibleAssignments.map(a=><th key={a.id} title={a.title}>
+                  {a.title} <span className="muted">/ {a.maxPoints}</span>
+                </th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {students.map(s=>{
+                return <tr key={s.id}>
+                  <td>{s.name}</td>
+                  {visibleAssignments.map(a=>{
+                    const g = state.grades.find(x=>x.studentId===s.id && x.assignmentId===a.id);
+                    const v = g? g.score : '';
+                    return <td key={a.id}>
+                      <input
+                        type="number"
+                        min="0"
+                        max={a.maxPoints}
+                        value={v}
+                        onChange={e=>setScore(s.id, a.id, e.target.value)}
+                        style={{width:'90px'}}
+                      />
+                    </td>;
+                  })}
+                </tr>;
+              })}
+            </tbody>
+          </table>
+        </div>}
+      </div>
+    );
+  }
+
+  function Dashboard({state}){
+    const {assignmentAvgs, courseAvgs, byStudent} = useMemo(()=>calcAverages(state), [state]);
+    const overallClassAvg = useMemo(()=>{
+      const vals = Array.from(byStudent.values()).map(v=>v.overall);
+      return vals.length ? (vals.reduce((s,x)=>s+x,0)/vals.length) : 0;
+    }, [byStudent]);
+
+    return (
+      <div className="grid">
+        <div className="card">
+          <Toolbar title="Overview" />
+          <div className="row">
+            <div className="stat"><div className="muted">Students</div><div className="big">{state.students.length}</div></div>
+            <div className="stat"><div className="muted">Courses</div><div className="big">{state.courses.length}</div></div>
+            <div className="stat"><div className="muted">Assignments</div><div className="big">{state.assignments.length}</div></div>
+            <div className="stat"><div className="muted">Class Avg</div><div className="big">{overallClassAvg.toFixed(1)}%</div></div>
+          </div>
+          <h3 style={{marginTop:18}}>Course Averages</h3>
+          {state.courses.length===0 ? <div className="empty">No courses.</div> :
+          <div className="table-scroll">
+            <table>
+              <thead><tr><th>Course</th><th>Average</th></tr></thead>
+              <tbody>
+                {state.courses.map(c=>{
+                  const pct = courseAvgs[c.id]||0;
+                  const cl = pct>=50?'ok':'bad';
+                  return <tr key={c.id}><td>{c.name}</td><td className={cl}>{pct.toFixed(1)}%</td></tr>;
+                })}
+              </tbody>
+            </table>
+          </div>}
+        </div>
+        <div className="card">
+          <Toolbar title="Assignment Averages" />
+          {state.assignments.length===0 ? <div className="empty">No assignments.</div> :
+          <div className="table-scroll">
+            <table>
+              <thead><tr><th>Assignment</th><th>Course</th><th>Average</th></tr></thead>
+              <tbody>
+                {state.assignments.map(a=>{
+                  const avg = assignmentAvgs[a.id]||0;
+                  const cl = avg >= a.maxPoints/2 ? 'ok':'bad';
+                  return <tr key={a.id}>
+                    <td>{a.title} <span className="muted">/ {a.maxPoints}</span></td>
+                    <td className="muted">{courseById(state, a.courseId)?.name||'—'}</td>
+                    <td className={cl}>{avg.toFixed(1)}</td>
+                  </tr>
+                })}
+              </tbody>
+            </table>
+          </div>}
+          <h3 style={{marginTop:18}}>Student Overall</h3>
+          {state.students.length===0 ? <div className="empty">No students.</div> :
+          <div className="table-scroll">
+            <table>
+              <thead><tr><th>Student</th><th>Overall %</th></tr></thead>
+              <tbody>
+                {state.students.map(s=>{
+                  const ov = byStudent.get(s.id)?.overall||0;
+                  const cl = ov>=50?'ok':'bad';
+                  return <tr key={s.id}><td>{s.name}</td><td className={cl}>{ov.toFixed(1)}%</td></tr>;
+                })}
+              </tbody>
+            </table>
+          </div>}
+        </div>
+      </div>
+    );
+  }
+
+  function DataOps({state,setState}){
+    const fileRef = useRef();
+    function exportJson(){
+      const blob = new Blob([JSON.stringify(state,null,2)], {type:'application/json'});
+      const a = Object.assign(document.createElement('a'), {href: URL.createObjectURL(blob), download:'gradebook.json'});
+      document.body.appendChild(a); a.click(); a.remove();
+    }
+    function importJson(file){
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const obj = JSON.parse(e.target.result);
+          if(!obj.students || !obj.courses || !obj.assignments || !obj.grades) throw new Error("Invalid schema.");
+          setState(obj);
+        } catch(err){ alert("Import failed: "+err.message); }
+      };
+      reader.readAsText(file);
+    }
+    return (
+      <div className="card">
+        <Toolbar title="Data" right={<span className="muted">Backup and restore your data.</span>}/>
+        <div className="row">
+          <button className="btn primary" onClick={exportJson}>Export JSON</button>
+          <input type="file" ref={fileRef} accept="application/json" onChange={e=>e.target.files[0] && importJson(e.target.files[0])}/>
+          <button className="btn warn" onClick={()=>{
+            if(confirm("Reset all data to demo defaults?")) setState(defaultState());
+          }}>Reset to Demo</button>
+        </div>
+        <div style={{marginTop:'12px'}} className="muted">
+          Schema: {"{ students[], courses[], assignments[], grades[] }"}
+        </div>
+      </div>
+    );
+  }
+
+  function App(){
+    const [state,_setState]=useState(loadState());
+    const [tab,setTab]=useState("Dashboard");
+    function setState(next){
+      const s = typeof next==='function' ? next(state) : next;
+      _setState(s); saveState(s);
+    }
+    useEffect(()=>{
+      const tabsEl = document.getElementById('tabs');
+      ReactDOM.createRoot(tabsEl).render(React.createElement(Tabs, {value:tab, onChange:setTab}));
+    }, [tab]);
+    return <>
+      {tab==="Dashboard" && <Dashboard state={state}/>}
+      {tab==="Students" && <Students state={state} setState={setState}/>}
+      {tab==="Courses" && <Courses state={state} setState={setState}/>}
+      {tab==="Assignments" && <Assignments state={state} setState={setState}/>}
+      {tab==="Grades" && <Grades state={state} setState={setState}/>}
+      {tab==="Data" && <DataOps state={state} setState={setState}/>}
+    </>;
+  }
+
+  function runTests(){
+    const s = defaultState();
+    const a1 = {id: uid(), courseId: s.courses[0].id, title: "Quiz 1", maxPoints: 10, dueDate: new Date().toISOString()};
+    const a2 = {id: uid(), courseId: s.courses[0].id, title: "Quiz 2", maxPoints: 10, dueDate: new Date().toISOString()};
+    s.assignments.push(a1, a2);
+    s.grades.push(
+      {id: uid(), studentId: s.students[0].id, assignmentId: a1.id, score: 8},
+      {id: uid(), studentId: s.students[0].id, assignmentId: a2.id, score: 6},
+      {id: uid(), studentId: s.students[1].id, assignmentId: a1.id, score: 5},
+      {id: uid(), studentId: s.students[1].id, assignmentId: a2.id, score: 7},
+    );
+    const {byStudent, assignmentAvgs, courseAvgs} = calcAverages(s);
+    const approx = (a,b)=>Math.abs(a-b)<1e-6;
+    console.assert(approx(assignmentAvgs[a1.id], (8+5)/2), "Assignment avg A1");
+    console.assert(approx(assignmentAvgs[a2.id], (6+7)/2), "Assignment avg A2");
+    const sid0 = s.students[0].id;
+    console.assert(approx(byStudent.get(sid0).overall, (14/20)*100), "Student 0 overall");
+    console.assert(approx(courseAvgs[s.courses[0].id], ((8+6+5+7)/(20))*100), "Course avg");
+    return true;
+  }
+
+  ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  try{ runTests() && console.log("Smoke tests: OK ✔️"); }catch(e){ console.error("Tests failed ❗", e); }
+})();
+</script>
+</body>
+</html>
